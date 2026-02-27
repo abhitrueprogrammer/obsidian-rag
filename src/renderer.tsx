@@ -26,12 +26,31 @@
  * ```
  */
 
-import React from "react"
-import ReactDOM from "react-dom/client"
-import "./index.css"
+import React, { useState } from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+
 
 function App() {
-return <h1 className="bg-amber-950 text-red-800">Hello Electron + Vite + React</h1>
+  const [path, setPath] = useState("");
+  return (
+    <div>
+      <h1 className="bg-amber-950 text-red-800">
+        Hello Electron + Vite + React
+      </h1>
+      {path}
+      <button
+        onClick={async () => {
+          const folderPath = await window.electronAPI.selectFolder();
+          if (folderPath) {
+            setPath(folderPath);
+          }
+        }}
+      >
+        Open obsidian folder
+      </button>
+    </div>
+  );
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />)
+ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
