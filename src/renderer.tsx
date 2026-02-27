@@ -28,9 +28,10 @@
 
 import React from "react"
 import ReactDOM from "react-dom/client"
+import "./index.css"
 
 function App() {
-return <h1>Hello Electron + Vite + React</h1>
+return <h1 className="bg-amber-950 text-red-800">Hello Electron + Vite + React</h1>
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<App />)
