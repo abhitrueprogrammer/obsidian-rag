@@ -29,6 +29,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
+import { Button } from "./components/ui/button";
 
 
 function App() {
@@ -39,7 +40,7 @@ function App() {
         Hello Electron + Vite + React
       </h1>
       {path}
-      <button
+      <Button
         onClick={async () => {
           const folderPath = await window.electronAPI.selectFolder();
           if (folderPath) {
@@ -48,7 +49,7 @@ function App() {
         }}
       >
         Open obsidian folder
-      </button>
+      </Button>
     </div>
   );
 }
