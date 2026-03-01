@@ -1,19 +1,38 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import path from "node:path";
 import started from "electron-squirrel-startup";
+import {
+  initializeAI,
+  loadMarkdownToStore,
+  runSearchAgent,
+} from "@/lib/rag-utils";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
 
-ipcMain.handle("dialog:openDirectory", async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ["openDirectory"],
-    title: "Select your obsidian Folder",
-    buttonLabel: "Select Folder",
+
+// IPC Handlers
+app.whenReady().then(async () => {
+  const ai = await initializeAI();
+  ipcMain.handle(
+    "ingest-docs",
+    async (_, dirPath) => await loadMarkdownToStore(dirPath, ai.vectorStore),
+  );
+  ipcMain.on("start-search", (event, query) =>
+    runSearchAgent(event, query, ai.model, ai.vectorStore),
+  );
+
+  ipcMain.handle("dialog:openDirectory", async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ["openDirectory"],
+      title: "Select your obsidian Folder",
+      buttonLabel: "Select Folder",
+    });
+
+    if (result.canceled) {
+      return null;
+    } else {
+      return result.filePaths[0];
+    }
   });
-
-  if (result.canceled) {
-    return null;
-  } else {
-    return result.filePaths[0];
-  }
 });
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
