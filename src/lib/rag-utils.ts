@@ -8,6 +8,8 @@ import { TextLoader } from "@langchain/classic/document_loaders/fs/text";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { MarkdownTextSplitter } from "@langchain/textsplitters";
+import { BaseLanguageModelInput } from "@langchain/core/language_models/base";
+import { ConfigurableModel, ConfigurableChatModelCallOptions } from "langchain/chat_models/universal";
 
 export async function initializeAI() {
   const model = await initChatModel("google-genai:gemini-2.5-flash-lite");
@@ -21,7 +23,7 @@ export async function initializeAI() {
 export async function loadMarkdownToStore(
   directoryPath: string,
   vectorStore: Chroma,
-) {
+): Promise<{ count: number }> {
   const textLoader = new TextLoader(directoryPath);
   const docs = await textLoader.load();
   const splitter = new MarkdownTextSplitter({
@@ -36,7 +38,7 @@ export async function loadMarkdownToStore(
 export async function runSearchAgent(
   event: Electron.IpcMainInvokeEvent,
   query: string,
-  model: any,
+  model: ConfigurableModel<BaseLanguageModelInput, ConfigurableChatModelCallOptions>,
   vectorStore: Chroma,
 ) {
   const agent = createAgent({
@@ -46,7 +48,9 @@ export async function runSearchAgent(
       dynamicSystemPromptMiddleware(async (state) => {
         const lastMessage = state.messages[state.messages.length - 1];
         const lastQuery =
-          typeof lastMessage.content === "string" ? lastMessage.content : "";
+          typeof lastMessage.content === "string"
+            ? lastMessage.content
+            : lastMessage.content.join("");
 
         const retrievedDocs = await vectorStore.similaritySearch(lastQuery, 2);
         const docsContent = retrievedDocs
@@ -65,6 +69,6 @@ export async function runSearchAgent(
 
   for await (const step of stream) {
     const lastMessage = step.messages[step.messages.length - 1];
-    event.sender.send("agent-chunk", lastMessage);
+    event.sender.send("agent-chunk", lastMessage.content);
   }
 }

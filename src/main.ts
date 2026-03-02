@@ -6,7 +6,6 @@ import {
   loadMarkdownToStore,
   runSearchAgent,
 } from "@/lib/rag-utils";
-import { Chroma } from "@langchain/community/vectorstores/chroma";
 
 
 // IPC Handlers

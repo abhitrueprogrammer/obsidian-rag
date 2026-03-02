@@ -31,9 +31,13 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { Button } from "./components/ui/button";
 
-
 function App() {
   const [path, setPath] = useState("");
+  const [agentOutput, setAgentOutput] = useState("");
+
+  window.electronAPI.onAgentChunk((chunk) => {
+    setAgentOutput((prev) => prev + chunk);
+  });
   return (
     <div>
       <h1 className="bg-amber-950 text-red-800">
@@ -50,6 +54,28 @@ function App() {
       >
         Open obsidian folder
       </Button>
+
+      <Button
+        onClick={async () => {
+          try {
+            await window.electronAPI.injestDocs(path);
+          } catch (error) {
+            console.error("Error ingesting docs:", error);
+          }
+        }}
+        disabled={!path}
+      >
+        Store Data in DB
+      </Button>
+
+      <Button
+        onClick={async () => {
+          window.electronAPI.startSearch("What is in this doc?");
+        }}
+      >
+        Search
+      </Button>
+      {agentOutput}
     </div>
   );
 }
