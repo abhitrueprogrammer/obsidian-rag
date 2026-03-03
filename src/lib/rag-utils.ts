@@ -14,11 +14,12 @@ import {
   ConfigurableModel,
   ConfigurableChatModelCallOptions,
 } from "langchain/chat_models/universal";
+import { dialog } from "electron";
 
 export async function initializeAI() {
   const model = await initChatModel("google-genai:gemini-2.5-flash-lite");
   const embeddings = new GoogleGenerativeAIEmbeddings({
-    model: "text-embedding-004", // free tier available
+    model: "gemini-embedding-001", // free tier available
   });
   const vectorStore = new Chroma(embeddings, {
     collectionName: "a-test-collection",
@@ -44,7 +45,29 @@ export async function loadMarkdownToStore(
     chunkOverlap: 200,
   });
   const allSplits = await splitter.splitDocuments(docs);
+  console.log("Split into chunks:", allSplits.length);
+
+  // Test embedding generation on the first chunk before adding to the store
+  if (allSplits.length > 0) {
+    try {
+      console.log("Testing embedding generation...");
+      const testEmbedding = await vectorStore.embeddings.embedQuery(
+        allSplits[0].pageContent
+      );
+      console.log("Test embedding length:", testEmbedding.length);
+      console.log("First few values:", testEmbedding.slice(0, 5));
+    } catch (error) {
+      console.error("Embedding generation failed:", error);
+      await dialog.showErrorBox(
+        "Embedding Generation Failed",
+        `Failed to generate embeddings: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
+  }
+
   await vectorStore.addDocuments(allSplits);
+
   return { count: allSplits.length };
 }
 

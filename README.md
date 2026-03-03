@@ -4,3 +4,4 @@ rag video
 langchain
 chatgpt ask
 dotenv.config();
+npx chroma run --path ./chroma-data

@@ -6,7 +6,8 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("electronAPI", {
   selectFolder: () => ipcRenderer.invoke("dialog:openDirectory"),
   injestDocs: (path: string) => ipcRenderer.invoke("ingest-docs", path),
-  startSearch: (query: string) => ipcRenderer.invoke("start-search", query),
+  startSearch: (query: string) => ipcRenderer.send("start-search", query),
+
   onAgentChunk: (callback: (chunk: string) => void) => {
     ipcRenderer.removeAllListeners("agent-chunk");
     ipcRenderer.on("agent-chunk", (_event, chunk) => callback(chunk));

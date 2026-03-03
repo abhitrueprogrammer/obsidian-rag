@@ -30,6 +30,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { Button } from "./components/ui/button";
+import { toast, Toaster } from "sonner";
 
 function App() {
   const [path, setPath] = useState("");
@@ -40,9 +41,8 @@ function App() {
   });
   return (
     <div>
-      <h1 className="bg-amber-950 text-red-800">
-        Hello Electron + Vite + React
-      </h1>
+      <Toaster />
+
       {path}
       <Button
         onClick={async () => {
@@ -54,16 +54,16 @@ function App() {
       >
         Open obsidian folder
       </Button>
-
       <Button
         onClick={async () => {
-          try {
-            console.log("Ingesting documents from path:", path);
-            await window.electronAPI.injestDocs(path);
-            console.log("Document ingestion completed successfully.");
-          } catch (error) {
-            console.error("Error ingesting docs:", error);
-          }
+          await toast.promise(window.electronAPI.injestDocs(path), {
+            loading: "Storing documents in DB...",
+            success: "Documents stored successfully.",
+            error: (err) =>
+              `Failed to store documents: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+          });
         }}
         disabled={!path}
       >
@@ -72,7 +72,7 @@ function App() {
 
       <Button
         onClick={async () => {
-          window.electronAPI.startSearch("What is in this doc?");
+          window.electronAPI.startSearch("What example for inheritance is in this document?");
         }}
       >
         Search
