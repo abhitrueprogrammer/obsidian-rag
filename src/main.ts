@@ -6,15 +6,40 @@ import {
   loadMarkdownToStore,
   runSearchAgent,
 } from "@/lib/rag-utils";
-
-
-// IPC Handlers
+import { config } from "dotenv";
+// Load environment variables from .env file
+config();
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
-  const ai = await initializeAI();
-  ipcMain.handle(
-    "ingest-docs",
-    async (_, dirPath) => await loadMarkdownToStore(dirPath, ai.vectorStore),
-  );
+  let ai;
+
+  try {
+    ai = await initializeAI();
+  } 
+  catch (error) {
+    console.error("Failed to initialize AI services:", error);
+    dialog.showErrorBox(
+      "Initialization Failed",
+      `Failed to initialize AI services:\n\n${error instanceof Error ? error.message : String(error)}\n\nThe application will now quit.`,
+    );
+    app.quit();
+    return;
+  }
+  ipcMain.handle("ingest-docs", async (_, dirPath) => {
+    try {
+      return await loadMarkdownToStore(dirPath, ai.vectorStore);
+    } catch (error) {
+      console.error("Failed to ingest documents:", error);
+      dialog.showErrorBox(
+        "Ingestion Failed",
+        `Failed to ingest documents:\n\n${error instanceof Error ? error.message : String(error)}`,
+      );
+      return null;
+    }
+  });
+
   ipcMain.on("start-search", (event, query) =>
     runSearchAgent(event, query, ai.model, ai.vectorStore),
   );
@@ -32,6 +57,7 @@ app.whenReady().then(async () => {
       return result.filePaths[0];
     }
   });
+  createWindow();
 });
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -61,11 +87,6 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 };
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on("ready", createWindow);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

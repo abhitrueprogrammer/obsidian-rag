@@ -58,7 +58,9 @@ function App() {
       <Button
         onClick={async () => {
           try {
+            console.log("Ingesting documents from path:", path);
             await window.electronAPI.injestDocs(path);
+            console.log("Document ingestion completed successfully.");
           } catch (error) {
             console.error("Error ingesting docs:", error);
           }

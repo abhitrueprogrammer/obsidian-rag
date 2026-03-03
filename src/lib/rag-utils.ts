@@ -4,16 +4,22 @@ import {
   initChatModel,
   SystemMessage,
 } from "langchain";
+import { DirectoryLoader } from "@langchain/classic/document_loaders/fs/directory";
 import { TextLoader } from "@langchain/classic/document_loaders/fs/text";
-import { OpenAIEmbeddings } from "@langchain/openai";
+import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { MarkdownTextSplitter } from "@langchain/textsplitters";
 import { BaseLanguageModelInput } from "@langchain/core/language_models/base";
-import { ConfigurableModel, ConfigurableChatModelCallOptions } from "langchain/chat_models/universal";
+import {
+  ConfigurableModel,
+  ConfigurableChatModelCallOptions,
+} from "langchain/chat_models/universal";
 
 export async function initializeAI() {
   const model = await initChatModel("google-genai:gemini-2.5-flash-lite");
-  const embeddings = new OpenAIEmbeddings({ model: "text-embedding-3-large" });
+  const embeddings = new GoogleGenerativeAIEmbeddings({
+    model: "text-embedding-004", // free tier available
+  });
   const vectorStore = new Chroma(embeddings, {
     collectionName: "a-test-collection",
   });
@@ -24,8 +30,15 @@ export async function loadMarkdownToStore(
   directoryPath: string,
   vectorStore: Chroma,
 ): Promise<{ count: number }> {
-  const textLoader = new TextLoader(directoryPath);
-  const docs = await textLoader.load();
+  const loader = new DirectoryLoader(
+    directoryPath,
+    {
+      ".md": (filePath: string) => new TextLoader(filePath),
+    },
+    true,
+    "ignore",
+  );
+  const docs = await loader.load();
   const splitter = new MarkdownTextSplitter({
     chunkSize: 1000,
     chunkOverlap: 200,
@@ -38,7 +51,10 @@ export async function loadMarkdownToStore(
 export async function runSearchAgent(
   event: Electron.IpcMainInvokeEvent,
   query: string,
-  model: ConfigurableModel<BaseLanguageModelInput, ConfigurableChatModelCallOptions>,
+  model: ConfigurableModel<
+    BaseLanguageModelInput,
+    ConfigurableChatModelCallOptions
+  >,
   vectorStore: Chroma,
 ) {
   const agent = createAgent({
