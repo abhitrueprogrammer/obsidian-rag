@@ -1,6 +1,7 @@
 import {
   createAgent,
   dynamicSystemPromptMiddleware,
+  HumanMessage,
   initChatModel,
   SystemMessage,
 } from "langchain";
@@ -70,7 +71,6 @@ export async function loadMarkdownToStore(
 
   return { count: allSplits.length };
 }
-
 export async function runSearchAgent(
   event: Electron.IpcMainInvokeEvent,
   query: string,
@@ -80,34 +80,30 @@ export async function runSearchAgent(
   >,
   vectorStore: Chroma,
 ) {
-  const agent = createAgent({
-    model,
-    tools: [],
-    middleware: [
-      dynamicSystemPromptMiddleware(async (state) => {
-        const lastMessage = state.messages[state.messages.length - 1];
-        const lastQuery =
-          typeof lastMessage.content === "string"
-            ? lastMessage.content
-            : lastMessage.content.join("");
+  const retrievedDocs = await vectorStore.similaritySearch(query, 4);
+  console.log("Retrieved docs:", retrievedDocs);
+  const docsContent = retrievedDocs.map((doc) => doc.pageContent).join("\n\n");
 
-        const retrievedDocs = await vectorStore.similaritySearch(lastQuery, 2);
-        const docsContent = retrievedDocs
-          .map((doc) => doc.pageContent)
-          .join("\n\n");
+  const systemPrompt = `You are a helpful assistant.
+Use the context below to answer.
+If the answer is not in context, say you don't know.
 
-        return new SystemMessage(`Use this context: \n\n${docsContent}`);
-      }),
-    ],
-  });
+Context:
+${docsContent}`;
 
-  const stream = await agent.stream(
-    { messages: [{ role: "user", content: query }] },
-    { streamMode: "values" },
-  );
+  const stream = await model.stream([
+    new SystemMessage(systemPrompt),
+    new HumanMessage(query),
+  ]);
 
-  for await (const step of stream) {
-    const lastMessage = step.messages[step.messages.length - 1];
-    event.sender.send("agent-chunk", lastMessage.content);
+  for await (const chunk of stream) {
+    const content =
+      typeof chunk.content === "string"
+        ? chunk.content
+        : chunk.content
+            .map((c) => (typeof c === "string" ? c : ("text" in c ? c.text : "")))
+            .join("");
+
+    if (content) event.sender.send("agent-chunk", content);
   }
 }
