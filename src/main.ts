@@ -7,6 +7,7 @@ import {
   runSearchAgent,
 } from "@/lib/rag-utils";
 import { config } from "dotenv";
+import { addVault, getVaults, removeVault } from "./lib/db";
 // Load environment variables from .env file
 config();
 // This method will be called when Electron has finished
@@ -17,8 +18,7 @@ app.whenReady().then(async () => {
 
   try {
     ai = await initializeAI();
-  } 
-  catch (error) {
+  } catch (error) {
     console.error("Failed to initialize AI services:", error);
     dialog.showErrorBox(
       "Initialization Failed",
@@ -42,6 +42,13 @@ app.whenReady().then(async () => {
 
   ipcMain.on("start-search", (event, query) =>
     runSearchAgent(event, query, ai.model, ai.vectorStore),
+  );
+  ipcMain.handle("db:addVault", (_event, vaultPath: string) =>
+    addVault(vaultPath),
+  );
+  ipcMain.handle("db:getVaults", () => getVaults());
+  ipcMain.handle("db:removeVault", (_event, vaultPath: string) =>
+    removeVault(vaultPath),
   );
 
   ipcMain.handle("dialog:openDirectory", async () => {
