@@ -32,7 +32,7 @@ import "./index.css";
 import HomePage from "./homepage";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
-import { SidebarProvider } from "./components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 
 function App() {
@@ -40,8 +40,11 @@ function App() {
     <>
       <TooltipProvider>
         <SidebarProvider>
-          <AppSidebar />
-          <HomePage />
+          <div className="flex h-screen">
+            <AppSidebar />
+            <SidebarTrigger />
+            <HomePage />
+          </div>
           <Toaster />
         </SidebarProvider>
       </TooltipProvider>
