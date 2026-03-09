@@ -32,6 +32,17 @@ export async function loadMarkdownToStore(
   directoryPath: string,
   vectorStore: Chroma,
 ): Promise<{ count: number }> {
+  const isAlreadyIndexed = await isDirectoryIndexedInChroma(
+    directoryPath,
+    vectorStore,
+  );
+
+  if (isAlreadyIndexed) {
+    console.log(
+      `Directory ${directoryPath} already indexed in Chroma. Skipping...`,
+    );
+    return { count: 0 };
+  }
   const loader = new DirectoryLoader(
     directoryPath,
     {
@@ -53,7 +64,7 @@ export async function loadMarkdownToStore(
     try {
       console.log("Testing embedding generation...");
       const testEmbedding = await vectorStore.embeddings.embedQuery(
-        allSplits[0].pageContent
+        allSplits[0].pageContent,
       );
       console.log("Test embedding length:", testEmbedding.length);
       console.log("First few values:", testEmbedding.slice(0, 5));
@@ -61,7 +72,7 @@ export async function loadMarkdownToStore(
       console.error("Embedding generation failed:", error);
       await dialog.showErrorBox(
         "Embedding Generation Failed",
-        `Failed to generate embeddings: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to generate embeddings: ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     }
@@ -101,7 +112,7 @@ ${docsContent}`;
       typeof chunk.content === "string"
         ? chunk.content
         : chunk.content
-            .map((c) => (typeof c === "string" ? c : ("text" in c ? c.text : "")))
+            .map((c) => (typeof c === "string" ? c : "text" in c ? c.text : ""))
             .join("");
 
     if (content) event.sender.send("agent-chunk", content);

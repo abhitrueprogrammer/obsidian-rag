@@ -29,56 +29,23 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { Button } from "./components/ui/button";
-import { toast, Toaster } from "sonner";
+import HomePage from "./homepage";
+import { Toaster } from "sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { SidebarProvider } from "./components/ui/sidebar";
+import { AppSidebar } from "./components/app-sidebar";
 
 function App() {
-  const [path, setPath] = useState("");
-  const [agentOutput, setAgentOutput] = useState("");
-
-  window.electronAPI.onAgentChunk((chunk) => {
-    setAgentOutput((prev) => prev + chunk);
-  });
   return (
-    <div>
-      <Toaster />
-
-      {path}
-      <Button
-        onClick={async () => {
-          const folderPath = await window.electronAPI.selectFolder();
-          if (folderPath) {
-            setPath(folderPath);
-          }
-        }}
-      >
-        Open obsidian folder
-      </Button>
-      <Button
-        onClick={async () => {
-          await toast.promise(window.electronAPI.injestDocs(path), {
-            loading: "Storing documents in DB...",
-            success: "Documents stored successfully.",
-            error: (err) =>
-              `Failed to store documents: ${
-                err instanceof Error ? err.message : String(err)
-              }`,
-          });
-        }}
-        disabled={!path}
-      >
-        Store Data in DB
-      </Button>
-
-      <Button
-        onClick={async () => {
-          window.electronAPI.startSearch("What example for inheritance is in this document?");
-        }}
-      >
-        Search
-      </Button>
-      {agentOutput}
-    </div>
+    <>
+      <TooltipProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <HomePage />
+          <Toaster />
+        </SidebarProvider>
+      </TooltipProvider>
+    </>
   );
 }
 
