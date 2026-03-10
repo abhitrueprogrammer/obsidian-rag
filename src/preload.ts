@@ -16,4 +16,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.removeAllListeners("agent-chunk");
     ipcRenderer.on("agent-chunk", (_event, chunk) => callback(chunk));
   },
+  onAgentSources: (
+    callback: (
+      sources: Array<{ content: string; metadata: Record<string, unknown> }>,
+    ) => void,
+  ) => {
+    ipcRenderer.removeAllListeners("agent-sources");
+    ipcRenderer.on("agent-sources", (_event, sources) => callback(sources));
+  },
 });

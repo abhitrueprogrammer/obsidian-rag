@@ -32,7 +32,6 @@ export async function loadMarkdownToStore(
   directoryPath: string,
   vectorStore: Chroma,
 ): Promise<{ count: number }> {
-
   const loader = new DirectoryLoader(
     directoryPath,
     {
@@ -47,12 +46,12 @@ export async function loadMarkdownToStore(
     chunkOverlap: 200,
   });
   const allSplits = await splitter.splitDocuments(docs);
-  
+
   // Add vault path to metadata for filtering/deletion
   allSplits.forEach((doc) => {
     doc.metadata.vaultPath = directoryPath;
   });
-  
+
   console.log("Split into chunks:", allSplits.length);
 
   // Test embedding generation on the first chunk before adding to the store
@@ -104,7 +103,13 @@ export async function runSearchAgent(
   );
   console.log("Retrieved docs:", retrievedDocs);
   const docsContent = retrievedDocs.map((doc) => doc.pageContent).join("\n\n");
-
+  event.sender.send(
+    "agent-sources",
+    retrievedDocs.map((doc) => ({
+      content: doc.pageContent,
+      metadata: doc.metadata,
+    })),
+  );
   const systemPrompt = `You are a helpful assistant.
 Use the context below to answer.
 If the answer is not in context, say you don't know.
