@@ -26,6 +26,8 @@ import { NavProjects } from "./nav-projects";
 import { NavSecondary } from "./nav-secondary";
 import { NavUser } from "./nav-user";
 import { SearchForm } from "./search-form";
+import { useContext } from "react";
+import { FolderContext } from "@/contexts/contexts";
 
 const data = {
   user: {
@@ -152,6 +154,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { folder, setFolder } = useContext(FolderContext);
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -163,8 +166,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <TerminalIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
-                  <span className="truncate text-xs">Enterprise</span>
+                  <span className="truncate font-medium">
+                    {folder || "Select a vault"}
+                  </span>
                 </div>
               </a>
             </SidebarMenuButton>

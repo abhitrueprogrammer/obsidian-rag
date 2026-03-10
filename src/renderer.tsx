@@ -34,17 +34,22 @@ import { Toaster } from "sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
+import { FolderContext } from "./contexts/contexts";
 
 function App() {
+  const [folder, setFolder] = useState("");
+
   return (
     <>
       <TooltipProvider>
         <SidebarProvider>
-          <div className="flex h-screen">
-            <AppSidebar />
-            <SidebarTrigger />
-            <HomePage />
-          </div>
+          <FolderContext value={{ folder, setFolder }}>
+            <div className="flex h-screen">
+              <AppSidebar />
+              <SidebarTrigger />
+              <HomePage />
+            </div>
+          </FolderContext>
           <Toaster />
         </SidebarProvider>
       </TooltipProvider>

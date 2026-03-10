@@ -14,6 +14,7 @@ export default defineConfig({
         "@chroma-core/default-embed",
         "electron",
         "electron-squirrel-startup",
+        "better-sqlite3",
       ],
     },
   },
