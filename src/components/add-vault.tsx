@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "./ui/button";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { FolderContext } from "@/contexts/contexts";
 export default function AddVault() {
   const [path, setPath] = useState("");
   const {folder, setFolder} = useContext(FolderContext);
+  const queryClient = useQueryClient();
   
   return (
     <Button
@@ -24,6 +26,7 @@ export default function AddVault() {
               await window.electronAPI.addVault(folderPath);
               
               setFolder(folderPath);
+              await queryClient.invalidateQueries({ queryKey: ["vaults"] });
             })(),
             {
               loading: "Storing vault...",

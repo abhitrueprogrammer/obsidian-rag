@@ -23,6 +23,11 @@ export function SearchForm({ ...props }: React.ComponentProps<"div">) {
   const { folder, setFolder } = useContext(FolderContext);
   const [open, setOpen] = useState(false);
 
+  const formatVaultPath = (vaultPath: string) => {
+    const parts = vaultPath.split(/[\\/]/).filter(Boolean);
+    return parts.slice(-2).join("/") || vaultPath;
+  };
+
   const { data: vaults = [] } = useQuery({
     queryKey: ["vaults"],
     queryFn: () => window.electronAPI.getVaults(),
@@ -38,7 +43,7 @@ export function SearchForm({ ...props }: React.ComponentProps<"div">) {
             aria-expanded={open}
             className="flex-1 justify-between"
           >
-            {folder ? folder : "Select vault..."}
+            {folder ? formatVaultPath(folder) : "Select vault..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -57,7 +62,7 @@ export function SearchForm({ ...props }: React.ComponentProps<"div">) {
                       setOpen(false);
                     }}
                   >
-                    {vault.path}
+                    {formatVaultPath(vault.path)}
                   </CommandItem>
                 ))}
               </CommandGroup>

@@ -22,7 +22,7 @@ import {
   TerminalIcon,
 } from "lucide-react";
 import { NavMain } from "./nav-main";
-import { NavProjects } from "./nav-projects";
+import { NavProjects } from "./nav-vaults";
 import { NavSecondary } from "./nav-secondary";
 import { NavUser } from "./nav-user";
 import { SearchForm } from "./search-form";
