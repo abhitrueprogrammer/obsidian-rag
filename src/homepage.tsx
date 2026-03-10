@@ -1,56 +1,60 @@
-import React, { useState } from "react";
-import { Toaster } from "./components/ui/sonner";
+import React, { useContext, useEffect, useState } from "react";
 import { Button } from "./components/ui/button";
-import { toast } from "sonner";
+import { Input } from "./components/ui/input";
+import { FolderContext } from "./contexts/contexts";
 
 export default function HomePage() {
-  const [path, setPath] = useState("");
-  
+  const [query, setQuery] = useState("");
   const [agentOutput, setAgentOutput] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const { folder } = useContext(FolderContext);
 
-  window.electronAPI.onAgentChunk((chunk) => {
-    setAgentOutput((prev) => prev + chunk);
-  });
+  useEffect(() => {
+    window.electronAPI.onAgentChunk((chunk) => {
+      setAgentOutput((prev) => prev + chunk);
+      setIsSearching(false);
+    });
+  }, []);
+
+  const handleSearch = () => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setAgentOutput("");
+    setIsSearching(true);
+    window.electronAPI.startSearch(trimmed, folder || undefined);
+  };
+
+  if (!folder) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <p className="text-muted-foreground">Select a vault to get started.</p>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      
-      {path}
-      <Button
-        onClick={async () => {
-          const folderPath = await window.electronAPI.selectFolder();
-          if (folderPath) {
-            setPath(folderPath);
-          }
-        }}
-      >
-        Open obsidian folder
-      </Button>
-      <Button
-        onClick={async () => {
-          await toast.promise(window.electronAPI.injestDocs(path), {
-            loading: "Storing documents in DB...",
-            success: "Documents stored successfully.",
-            error: (err) =>
-              `Failed to store documents: ${
-                err instanceof Error ? err.message : String(err)
-              }`,
-          });
-        }}
-        disabled={!path}
-      >
-        Store Data in DB
-      </Button>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex-1 overflow-auto p-4">
+        <div className="mx-auto w-full max-w-4xl whitespace-pre-wrap rounded-md border p-4 text-sm">
+          {agentOutput || "Ask a question below and the answer will appear here."}
+        </div>
+      </div>
 
-      <Button
-        onClick={async () => {
-          window.electronAPI.startSearch(
-            "What example for inheritance is in this document?",
-          );
-        }}
-      >
-        Search
-      </Button>
-      {agentOutput}
+      <div className="border-t p-3">
+        <div className="mx-auto flex w-full max-w-4xl gap-2">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+            placeholder="Ask about your vault..."
+          />
+          <Button onClick={handleSearch} disabled={isSearching || !query.trim()}>
+            {isSearching ? "Searching..." : "Search"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

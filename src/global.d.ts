@@ -1,7 +1,7 @@
 interface ElectronAPI {
   selectFolder: () => Promise<string | undefined>;
   injestDocs: (dirPath: string) => Promise<{ count: number }>;
-  startSearch: (query: string) => void;
+  startSearch: (query: string, vaultPath?: string) => void;
   onAgentChunk: (callback: (chunk: string) => void) => void;
   addVault: (path: string) => Promise<void>;
   getVaults: () => Promise<{ id: number; path: string; created_at: string }[]>;

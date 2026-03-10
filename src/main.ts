@@ -38,8 +38,8 @@ app.whenReady().then(async () => {
     }
   });
 
-  ipcMain.on("start-search", (event, query) =>
-    runSearchAgent(event, query, ai.model, ai.vectorStore),
+  ipcMain.on("start-search", (event, query, vaultPath) =>
+    runSearchAgent(event, query, ai.model, ai.vectorStore, vaultPath),
   );
   ipcMain.handle("db:addVault", (_event, vaultPath: string) =>
     addVault(vaultPath),

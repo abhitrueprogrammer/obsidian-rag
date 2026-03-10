@@ -37,6 +37,7 @@ import { AppSidebar } from "./components/app-sidebar";
 import { FolderContext } from "./contexts/contexts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { ThemeProvider } from "./contexts/theme-context";
 
 const queryClient = new QueryClient();
 
@@ -44,21 +45,25 @@ function App() {
   const [folder, setFolder] = useState("");
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <SidebarProvider>
-          <FolderContext value={{ folder, setFolder }}>
-            <div className="flex h-screen">
-              <AppSidebar />
-              <SidebarTrigger />
-              <HomePage />
-            </div>
-          </FolderContext>
-          <Toaster />
-        </SidebarProvider>
-      </TooltipProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SidebarProvider>
+            <FolderContext value={{ folder, setFolder }}>
+              <div className="flex h-screen w-full overflow-hidden">
+                <AppSidebar />
+                <SidebarTrigger />
+                <main className="flex min-h-0 flex-1">
+                  <HomePage />
+                </main>
+              </div>
+            </FolderContext>
+            <Toaster />
+          </SidebarProvider>
+        </TooltipProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
