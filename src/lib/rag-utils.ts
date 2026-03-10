@@ -23,7 +23,7 @@ export async function initializeAI() {
     model: "gemini-embedding-001", // free tier available
   });
   const vectorStore = new Chroma(embeddings, {
-    collectionName: "a-test-collection",
+    collectionName: "obsidian-vaults", // Single collection for all vaults
   });
   return { model, vectorStore };
 }
@@ -32,17 +32,7 @@ export async function loadMarkdownToStore(
   directoryPath: string,
   vectorStore: Chroma,
 ): Promise<{ count: number }> {
-  const isAlreadyIndexed = await isDirectoryIndexedInChroma(
-    directoryPath,
-    vectorStore,
-  );
 
-  if (isAlreadyIndexed) {
-    console.log(
-      `Directory ${directoryPath} already indexed in Chroma. Skipping...`,
-    );
-    return { count: 0 };
-  }
   const loader = new DirectoryLoader(
     directoryPath,
     {
@@ -57,6 +47,12 @@ export async function loadMarkdownToStore(
     chunkOverlap: 200,
   });
   const allSplits = await splitter.splitDocuments(docs);
+  
+  // Add vault path to metadata for filtering/deletion
+  allSplits.forEach((doc) => {
+    doc.metadata.vaultPath = directoryPath;
+  });
+  
   console.log("Split into chunks:", allSplits.length);
 
   // Test embedding generation on the first chunk before adding to the store
@@ -82,6 +78,15 @@ export async function loadMarkdownToStore(
 
   return { count: allSplits.length };
 }
+
+export async function deleteVaultFromStore(
+  vaultPath: string,
+  vectorStore: Chroma,
+): Promise<void> {
+  // Delete all documents with matching vaultPath metadata
+  await vectorStore.delete({ filter: { vaultPath } });
+}
+
 export async function runSearchAgent(
   event: Electron.IpcMainInvokeEvent,
   query: string,
@@ -90,8 +95,13 @@ export async function runSearchAgent(
     ConfigurableChatModelCallOptions
   >,
   vectorStore: Chroma,
+  vaultPath?: string, // Optional: filter to specific vault
 ) {
-  const retrievedDocs = await vectorStore.similaritySearch(query, 4);
+  const retrievedDocs = await vectorStore.similaritySearch(
+    query,
+    4,
+    vaultPath ? { vaultPath } : undefined, // Filter by vault if specified
+  );
   console.log("Retrieved docs:", retrievedDocs);
   const docsContent = retrievedDocs.map((doc) => doc.pageContent).join("\n\n");
 
@@ -112,7 +122,14 @@ ${docsContent}`;
       typeof chunk.content === "string"
         ? chunk.content
         : chunk.content
-            .map((c) => (typeof c === "string" ? c : "text" in c ? c.text : ""))
+            .map((c: unknown) => {
+              if (typeof c === "string") return c;
+              if (c && typeof c === "object" && "text" in c) {
+                const text = (c as { text?: unknown }).text;
+                return typeof text === "string" ? text : "";
+              }
+              return "";
+            })
             .join("");
 
     if (content) event.sender.send("agent-chunk", content);

@@ -7,6 +7,7 @@ import { FolderContext } from "@/contexts/contexts";
 export default function AddVault() {
   const [path, setPath] = useState("");
   const {folder, setFolder} = useContext(FolderContext);
+  
   return (
     <Button
       onClick={async () => {
@@ -16,7 +17,7 @@ export default function AddVault() {
 
           await toast.promise(
             (async () => {
-              
+              if(folderPath )
               // TODO: Create a "is injested" state in the DB and check that here before indexing
               await window.electronAPI.injestDocs(folderPath);
               // If the next call fails, we can retry without having to re-ingest the docs or deleting the vault from the DB

@@ -35,12 +35,16 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { FolderContext } from "./contexts/contexts";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+const queryClient = new QueryClient();
 
 function App() {
   const [folder, setFolder] = useState("");
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SidebarProvider>
           <FolderContext value={{ folder, setFolder }}>
@@ -53,7 +57,8 @@ function App() {
           <Toaster />
         </SidebarProvider>
       </TooltipProvider>
-    </>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

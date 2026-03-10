@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FolderContext } from "@/contexts/contexts";
+import { toast } from "sonner";
 
 import {
   DropdownMenu,
@@ -16,30 +19,37 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { MoreHorizontalIcon, FolderIcon, ShareIcon, Trash2Icon } from "lucide-react"
+import { MoreHorizontalIcon, FolderIcon, Trash2Icon } from "lucide-react"
 
-export function NavProjects({
-  projects,
-}: {
-  projects: {
-    name: string
-    url: string
-    icon: React.ReactNode
-  }[]
-}) {
-  const { isMobile } = useSidebar()
+export function NavProjects() {
+  const { isMobile } = useSidebar();
+  const { folder, setFolder } = useContext(FolderContext);
+  const queryClient = useQueryClient();
+
+  const { data: vaults = [] } = useQuery({
+    queryKey: ["vaults"],
+    queryFn: () => window.electronAPI.getVaults(),
+  });
+
+  const deleteVaultMutation = useMutation({
+    mutationFn: (vaultPath: string) => window.electronAPI.removeVault(vaultPath),
+    onSuccess: async (_data, deletedPath) => {
+      await queryClient.invalidateQueries({ queryKey: ["vaults"] });
+      if (folder === deletedPath) {
+        setFolder("");
+      }
+    },
+  });
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>Vaults</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((item) => (
-          <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                {item.icon}
-                <span>{item.name}</span>
-              </a>
+        {vaults.map((vault) => (
+          <SidebarMenuItem key={vault.id}>
+            <SidebarMenuButton onClick={() => setFolder(vault.path)}>
+              <FolderIcon />
+              <span>{vault.path.split('/').pop()}</span>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -57,30 +67,30 @@ export function NavProjects({
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFolder(vault.path)}>
                   <FolderIcon className="text-muted-foreground" />
-                  <span>View Project</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ShareIcon className="text-muted-foreground" />
-                  <span>Share Project</span>
+                  <span>Select Vault</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    toast.promise(deleteVaultMutation.mutateAsync(vault.path), {
+                      loading: "Deleting vault...",
+                      success: "Vault deleted.",
+                      error: (err) =>
+                        `Failed to delete vault: ${
+                          err instanceof Error ? err.message : String(err)
+                        }`,
+                    });
+                  }}
+                >
                   <Trash2Icon className="text-muted-foreground" />
-                  <span>Delete Project</span>
+                  <span>Delete Vault</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton>
-            <MoreHorizontalIcon
-            />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )

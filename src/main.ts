@@ -5,6 +5,7 @@ import {
   initializeAI,
   loadMarkdownToStore,
   runSearchAgent,
+  deleteVaultFromStore,
 } from "@/lib/rag-utils";
 import { config } from "dotenv";
 import { addVault, getVaults, removeVault } from "./lib/db";
@@ -32,11 +33,8 @@ app.whenReady().then(async () => {
       return await loadMarkdownToStore(dirPath, ai.vectorStore);
     } catch (error) {
       console.error("Failed to ingest documents:", error);
-      dialog.showErrorBox(
-        "Ingestion Failed",
-        `Failed to ingest documents:\n\n${error instanceof Error ? error.message : String(error)}`,
-      );
-      return null;
+      
+     throw error;
     }
   });
 
@@ -47,9 +45,17 @@ app.whenReady().then(async () => {
     addVault(vaultPath),
   );
   ipcMain.handle("db:getVaults", () => getVaults());
-  ipcMain.handle("db:removeVault", (_event, vaultPath: string) =>
-    removeVault(vaultPath),
-  );
+  ipcMain.handle("db:removeVault", async (_event, vaultPath: string) => {
+    try {
+      // Delete from vector store first
+      await deleteVaultFromStore(vaultPath, ai.vectorStore);
+      // Then remove from database
+      return removeVault(vaultPath);
+    } catch (error) {
+      console.error("Failed to remove vault:", error);
+      throw error;
+    }
+  });
 
   ipcMain.handle("dialog:openDirectory", async () => {
     const result = await dialog.showOpenDialog({

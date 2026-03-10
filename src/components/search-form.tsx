@@ -1,5 +1,5 @@
 "use client";
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import {
   Command,
   CommandEmpty,
@@ -17,21 +17,16 @@ import { Button } from "@/components/ui/button";
 import AddVault from "./add-vault";
 import { FolderContext } from "@/contexts/contexts";
 import { ChevronsUpDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export function SearchForm({ ...props }: React.ComponentProps<"div">) {
-  const [vaults, setVaults] = useState<
-    { id: number; path: string; created_at: string }[]
-  >([]);
   const { folder, setFolder } = useContext(FolderContext);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchVaults() {
-      const vaults = await window.electronAPI.getVaults();
-      setVaults(vaults);
-    }
-    fetchVaults();
-  }, []);
+  const { data: vaults = [] } = useQuery({
+    queryKey: ["vaults"],
+    queryFn: () => window.electronAPI.getVaults(),
+  });
 
   return (
     <div className="flex items-center gap-2" {...props}>
